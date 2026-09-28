@@ -3,77 +3,88 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * 设计语言：Dia 浏览器风格（diabrowser.com 品牌令牌实测）
+ * - 暖白背景 #FBFAF6 + 暖黑文字 #262625（拒绝冷灰蓝）
+ * - 主色矢车菊蓝紫 #5863EA，金黄 #E1B746 仅作点缀
+ * - 12px 柔和大圆角，胶囊按钮，无重阴影
+ */
+
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-  --success: oklch(0.627 0.17 149.2);
+  --radius: 0.75rem;
+  --background: #fbfaf6;
+  --foreground: #262625;
+  --card: #fffffd;
+  --card-foreground: #262625;
+  --popover: #fffffd;
+  --popover-foreground: #262625;
+  --primary: #5863ea;
+  --primary-foreground: #fdfcff;
+  --secondary: #efede5;
+  --secondary-foreground: #262625;
+  --muted: #f2f0e9;
+  --muted-foreground: #6f6c62;
+  --accent: #efede5;
+  --accent-foreground: #262625;
+  --destructive: #e5484d;
+  --destructive-foreground: #fdfcff;
+  --border: #e8e5da;
+  --input: #e8e5da;
+  --ring: #5863ea;
+  --chart-1: #5863ea;
+  --chart-2: #e1b746;
+  --chart-3: #4caf7d;
+  --chart-4: #e07a5f;
+  --chart-5: #9b8afb;
+  --sidebar: #f5f3ea;
+  --sidebar-foreground: #262625;
+  --sidebar-primary: #5863ea;
+  --sidebar-primary-foreground: #fdfcff;
+  --sidebar-accent: #eceadf;
+  --sidebar-accent-foreground: #262625;
+  --sidebar-border: #e8e5da;
+  --sidebar-ring: #5863ea;
+  --success: #3d9a50;
+  --gold: #e1b746;
+  --gold-foreground: #262625;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
-  --success: oklch(0.723 0.219 149.6);
+  --background: #21201c;
+  --foreground: #edeae1;
+  --card: #2a2924;
+  --card-foreground: #edeae1;
+  --popover: #2a2924;
+  --popover-foreground: #edeae1;
+  --primary: #7d86f2;
+  --primary-foreground: #191814;
+  --secondary: #35332b;
+  --secondary-foreground: #edeae1;
+  --muted: #35332b;
+  --muted-foreground: #a5a195;
+  --accent: #35332b;
+  --accent-foreground: #edeae1;
+  --destructive: #ff6369;
+  --destructive-foreground: #191814;
+  --border: rgb(255 255 255 / 9%);
+  --input: rgb(255 255 255 / 13%);
+  --ring: #7d86f2;
+  --chart-1: #7d86f2;
+  --chart-2: #e1b746;
+  --chart-3: #6bcb7b;
+  --chart-4: #f28870;
+  --chart-5: #b3a9ff;
+  --sidebar: #26251f;
+  --sidebar-foreground: #edeae1;
+  --sidebar-primary: #7d86f2;
+  --sidebar-primary-foreground: #191814;
+  --sidebar-accent: #32302a;
+  --sidebar-accent-foreground: #edeae1;
+  --sidebar-border: rgb(255 255 255 / 8%);
+  --sidebar-ring: #7d86f2;
+  --success: #6bcb7b;
+  --gold: #e1b746;
+  --gold-foreground: #191814;
 }
 
 @theme inline {
@@ -110,10 +121,12 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-success: var(--success);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --color-gold: var(--gold);
+  --color-gold-foreground: var(--gold-foreground);
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 3px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 5px);
 }
 
 @layer base {
@@ -129,7 +142,7 @@
   }
 }
 
-/* 精美滚动条 */
+/* 柔和暖灰滚动条 */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -138,9 +151,21 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: color-mix(in oklab, var(--muted-foreground) 30%, transparent);
-  border-radius: 4px;
+  background: color-mix(in oklab, var(--muted-foreground) 26%, transparent);
+  border-radius: 999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in oklab, var(--muted-foreground) 50%, transparent);
+  background: color-mix(in oklab, var(--muted-foreground) 45%, transparent);
+}
+
+/* Dia 式柔和投影：大模糊、低透明、暖色偏 */
+.shadow-dia {
+  box-shadow:
+    0 1px 2px rgb(38 38 37 / 4%),
+    0 8px 28px rgb(38 38 37 / 10%);
+}
+.dark .shadow-dia {
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 25%),
+    0 8px 28px rgb(0 0 0 / 40%);
 }

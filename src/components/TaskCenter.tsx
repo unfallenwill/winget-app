@@ -106,7 +106,7 @@ export function TaskCenter({ tasks, onCancel, onClearFinished }: TaskCenterProps
 
   return (
     <>
-      <div className="pointer-events-auto absolute bottom-4 right-4 z-40 w-[380px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border bg-card shadow-2xl shadow-black/10">
+      <div className="shadow-dia pointer-events-auto absolute bottom-4 right-4 z-40 w-[380px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border bg-card">
         {/* 头部 */}
         <div className="flex items-center gap-2 border-b bg-muted/40 px-3 py-2">
           <ListTodo className="size-4 text-muted-foreground" />

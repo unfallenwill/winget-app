@@ -29,16 +29,30 @@ npm run smoke     # 3 秒自动退出的启动冒烟测试
 
 ```
 electron/            主进程（CommonJS）
-├── main.js          窗口生命周期、IPC handlers、任务管理、外链拦截
+├── main.js          窗口生命周期、IPC handlers、任务管理、外链拦截、
+│                    冒烟测试（SMOKE_TEST）与自动截图（SCREENSHOT/SHOT_MODE）
 ├── preload.js       contextBridge 白名单 API（沙箱 + 上下文隔离）
 └── winget.js        winget 执行器：spawn + 流式行输出、固定宽度表格解析
                      （按显示宽度对齐，CJK 双宽）、show 键值解析、进度 % 提取
 src/                 渲染进程（Vite + React 19 + TS）
-├── App.tsx          视图编排、数据加载、批量更新
+├── App.tsx          顶栏/工具行/列表/详情面板 编排、数据加载、批量更新
+├── components/
+│   ├── TopBar.tsx           胶囊分段导航（Dia 风格）
+│   ├── PackageListView.tsx  Raycast 式统一列表：↑↓ 键盘导航、选中联动
+│   ├── DetailPanel.tsx      右侧常驻详情面板（master-detail，替代弹窗）
+│   ├── CommandPalette.tsx   Ctrl+K 全局命令栏（一框多能）
+│   ├── TaskCenter.tsx       任务浮层：实时进度 + 日志流
+│   └── ui/                  shadcn/ui 组件（Tailwind v4）
 ├── hooks/           任务中心（IPC 事件订阅 → Promise 化）、主题、防抖
-├── components/      视图组件 + shadcn/ui 组件（Tailwind v4）
 └── types.ts         主/渲染进程共享类型
 ```
+
+### 设计语言
+
+视觉：**Dia 浏览器温度**（暖米白 `#FBFAF6` / 暖炭 `#21201C`、蓝紫主色 `#5863EA`、
+金黄点缀 `#E1B746`、胶囊按钮、大圆角、无重阴影），设计令牌经 firecrawl 实测提取。
+交互：**Raycast 骨架**（命令栏即入口、列表 ↑↓ 导航、master-detail 联动、
+Enter 主操作、底部键位提示条）。
 
 ### winget 输出解析要点（实测 winget v1.29）
 

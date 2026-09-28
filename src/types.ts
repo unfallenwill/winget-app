@@ -1,5 +1,7 @@
 /** 渲染进程与主进程共享的类型定义 */
 
+export type ViewKey = 'discover' | 'installed' | 'updates'
+
 export interface WingetRow {
   name: string
   id: string

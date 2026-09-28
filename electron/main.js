@@ -1,6 +1,7 @@
 'use strict'
 const { app, BrowserWindow, ipcMain, shell } = require('electron')
 const path = require('path')
+const fs = require('fs')
 const winget = require('./winget')
 
 const isDev = !!process.env.VITE_DEV_SERVER_URL
@@ -13,7 +14,7 @@ function createWindow() {
     minWidth: 1020,
     minHeight: 680,
     show: false,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fbfaf6',
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -111,7 +112,7 @@ ipcMain.handle('winget:task:cancel', (_e, taskId) => {
 
 // 渲染进程深浅色变化时同步原生窗口背景色
 ipcMain.on('ui:set-dark', (_e, dark) => {
-  if (mainWindow) mainWindow.setBackgroundColor(dark ? '#0a0a0a' : '#ffffff')
+  if (mainWindow) mainWindow.setBackgroundColor(dark ? '#21201c' : '#fbfaf6')
 })
 
 /* ---------------- 生命周期 ---------------- */
@@ -134,5 +135,40 @@ if (process.env.SMOKE_TEST) {
       console.log('[smoke] window created, exiting')
       app.exit(0)
     }, 3000)
+  })
+}
+
+// 自动截图：SCREENSHOT=<输出路径> SHOT_MODE=home|installed|updates|palette|dark
+if (process.env.SCREENSHOT) {
+  app.whenReady().then(() => {
+    const mode = process.env.SHOT_MODE || 'home'
+    const wc = mainWindow.webContents
+    setTimeout(async () => {
+      try {
+        if (mode === 'dark') {
+          await wc.executeJavaScript("document.documentElement.classList.add('dark')")
+          mainWindow.setBackgroundColor('#21201c')
+        } else if (mode === 'light') {
+          await wc.executeJavaScript("document.documentElement.classList.remove('dark')")
+          mainWindow.setBackgroundColor('#fbfaf6')
+        } else if (mode === 'installed' || mode === 'updates') {
+          const label = mode === 'installed' ? '已安装' : '更新'
+          await wc.executeJavaScript(
+            `[...document.querySelectorAll('button')].find(b => b.textContent.trim().startsWith('${label}'))?.click()`
+          )
+        } else if (mode === 'palette') {
+          // 点击 logo（onClick={onOpenPalette}），React 合成事件对原生 click() 可靠响应
+          await wc.executeJavaScript("document.querySelector('header button')?.click()")
+        }
+        // 已安装/更新需要等 winget 数据渲染
+        await new Promise((r) => setTimeout(r, mode === 'installed' || mode === 'updates' ? 2500 : 900))
+        const image = await wc.capturePage()
+        fs.writeFileSync(process.env.SCREENSHOT, image.toPNG())
+        console.log('[screenshot] saved: ' + process.env.SCREENSHOT + ' (mode=' + mode + ')')
+      } catch (err) {
+        console.error('[screenshot] failed:', err)
+      }
+      app.exit(0)
+    }, 7000)
   })
 }
