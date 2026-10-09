@@ -1,12 +1,14 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import {
   ArrowRight,
   CircleArrowUp,
   Compass,
   HardDriveDownload,
   History,
+  Info,
   Loader2,
   Moon,
+  Package,
   PackageSearch,
   RefreshCw,
   Search,
@@ -22,9 +24,9 @@ import {
   CommandList,
   CommandSeparator,
 } from '@/components/ui/command'
-import type { ViewKey } from '@/types'
-import { loadSearchHistory } from '@/lib/utils'
-import type { WingetRow } from '@/types'
+import { Badge } from '@/components/ui/badge'
+import { cleanVersion, type ViewKey, type WingetRow } from '@/types'
+import { cn, loadSearchHistory } from '@/lib/utils'
 
 interface CommandPaletteProps {
   open: boolean
@@ -41,6 +43,78 @@ interface CommandPaletteProps {
   onRefreshAll: () => void
   onUpgradeAll: () => void
   onDetail: (row: WingetRow) => void
+}
+
+/** 图标底色语义：琥珀=高价值动作，primary/info=当前上下文，neutral=辅助 */
+const TONE = {
+  amber: 'border-warning/25 bg-warning/12 text-warning',
+  primary: 'border-primary/20 bg-primary/10 text-primary',
+  info: 'border-info/20 bg-info/10 text-info',
+  neutral: 'border-border/70 bg-surface-3/55 text-muted-foreground',
+} as const
+
+const NAV_ITEMS: { view: ViewKey; label: string; desc: string; Icon: typeof Compass }[] = [
+  { view: 'discover', label: '发现', desc: '搜索并安装新程序', Icon: Compass },
+  { view: 'installed', label: '已安装', desc: '查看与管理本机程序', Icon: HardDriveDownload },
+  { view: 'updates', label: '更新', desc: '可升级的程序', Icon: CircleArrowUp },
+]
+
+/**
+ * 统一图标尺寸 14px。
+ * 显式带上 size 类可以避开 command.tsx 里 `svg:not([class*='size-'])` 的默认尺寸与灰化规则，
+ * 让图标瓷砖的语义色说了算。
+ */
+const ico = (Icon: typeof Compass, className?: string) => (
+  <Icon className={cn('size-3.5', className)} />
+)
+
+/** 统一的命令项骨架：图标瓷砖 + 主标签 + 右侧附加信息 */
+function ItemRow({
+  value,
+  onSelect,
+  icon,
+  tone,
+  children,
+  hint,
+  disabled,
+  title,
+}: {
+  value: string
+  onSelect: () => void
+  icon: ReactNode
+  tone: keyof typeof TONE
+  children: ReactNode
+  hint?: ReactNode
+  disabled?: boolean
+  title?: string
+}) {
+  return (
+    <CommandItem
+      value={value}
+      onSelect={onSelect}
+      disabled={disabled}
+      title={title}
+      className={cn(
+        'h-9 gap-2.5 rounded-md pr-2.5 pl-2 transition-colors duration-fast ease-diasnap',
+        "before:absolute before:top-1/2 before:left-0.5 before:h-4 before:w-[2px] before:-translate-y-1/2 before:rounded-full before:bg-transparent before:content-['']",
+        'data-[selected=true]:bg-surface-3 data-[selected=true]:shadow-s1 data-[selected=true]:ring-1 data-[selected=true]:ring-border-strong/50 data-[selected=true]:before:bg-primary',
+        'data-[disabled=true]:opacity-55',
+      )}
+    >
+      <span
+        className={cn(
+          'flex size-6 shrink-0 items-center justify-center rounded-[7px] border transition-colors duration-fast',
+          TONE[tone],
+        )}
+      >
+        {icon}
+      </span>
+      <span className="flex min-w-0 flex-1 items-baseline gap-2 truncate">
+        {children}
+      </span>
+      {hint}
+    </CommandItem>
+  )
 }
 
 /**
@@ -96,138 +170,182 @@ export function CommandPalette({
         if (!o) setQuery('')
       }}
       showCloseButton={false}
-      className="top-[16%] max-w-xl translate-y-0 rounded-3xl border-border/60"
+      className={cn(
+        'top-[14%] max-w-[600px] translate-y-0 rounded-xl border-border-strong/70',
+        '[&_[data-slot=command-input-wrapper]]:bg-surface-3/30',
+      )}
       title="命令栏"
       description="搜索软件包或执行命令"
     >
       <CommandInput
         value={query}
         onValueChange={setQuery}
-        placeholder="搜索软件包，或输入命令…"
+        placeholder="搜索已安装程序，或输入命令…"
+        className="font-medium"
       />
-      <CommandList className="min-h-56">
+
+      <CommandList className="max-h-[min(56vh,26rem)] min-h-56">
         <CommandEmpty>
-          <div className="flex flex-col items-center gap-1.5 py-8 text-center">
-            <PackageSearch className="size-6 text-muted-foreground/60" />
-            <p className="text-sm text-muted-foreground">没有匹配的命令或已安装程序</p>
-            {q && (
-              <p className="text-xs text-muted-foreground/70">
-                试试在 winget 源中搜索「{q}」
-              </p>
-            )}
+          <div className="flex flex-col items-center gap-2 py-10 text-center">
+            <span className="flex size-9 items-center justify-center rounded-lg border border-border/70 bg-surface-3/50 text-muted-foreground">
+              <PackageSearch className="size-4" />
+            </span>
+            <p className="text-sm font-medium text-foreground/80">没有匹配的命令或已安装程序</p>
+            {q && <p className="text-xs text-muted-foreground">回车即可在 winget 源中搜索「{q}」</p>}
+            {!q && <p className="text-xs text-muted-foreground">输入包名，或用 ↑↓ 浏览命令</p>}
           </div>
         </CommandEmpty>
 
-        {/* 搜索行动：Dia 式一框多能的核心 */}
+        {/* 搜索行动：一框多能的核心，永远排在最前 */}
         {q && (
           <CommandGroup heading="搜索">
-            <CommandItem
+            <ItemRow
               value={`winget-search-${q}`}
               onSelect={() => run(() => onSearch(q))}
-              className="gap-2.5"
+              icon={ico(Search)}
+              tone="primary"
+              hint={<ArrowRight className="size-3.5 shrink-0 text-muted-foreground" />}
             >
-              <Search className="size-4 shrink-0 text-primary" />
-              <span>
-                在 winget 搜索 <span className="font-medium">「{q}」</span>
-              </span>
-              <ArrowRight className="ml-auto size-3.5 text-muted-foreground" />
-            </CommandItem>
+              <span className="font-medium">在 winget 搜索</span>
+              <span className="truncate text-muted-foreground">「{q}」</span>
+            </ItemRow>
           </CommandGroup>
         )}
 
         {historyMatches.length > 0 && (
           <CommandGroup heading="最近搜索">
             {historyMatches.map((h) => (
-              <CommandItem key={h} value={`history-${h}`} onSelect={() => run(() => onSearch(h))} className="gap-2.5">
-                <History className="size-4 shrink-0 text-muted-foreground" />
+              <ItemRow
+                key={h}
+                value={`history-${h}`}
+                onSelect={() => run(() => onSearch(h))}
+                icon={ico(History)}
+                tone="neutral"
+              >
                 <span className="truncate">{h}</span>
-              </CommandItem>
+              </ItemRow>
             ))}
           </CommandGroup>
         )}
 
         {localMatches.length > 0 && (
-          <CommandGroup heading="已安装匹配">
+          <CommandGroup heading="已安装 · 打开详情">
             {localMatches.map((row) => (
-              <CommandItem
+              <ItemRow
                 key={`${row.id}|${row.version}|${row.source}`}
                 value={`installed-${row.id}-${row.version}`}
                 onSelect={() => run(() => onDetail(row))}
-                className="gap-2.5"
+                icon={ico(Package)}
+                tone="info"
+                hint={
+                  <span className="shrink-0 font-mono text-xs text-muted-foreground tabular-nums">
+                    {cleanVersion(row.version)}
+                  </span>
+                }
               >
-                <HardDriveDownload className="size-4 shrink-0 text-muted-foreground" />
-                <span className="truncate">{row.name}</span>
+                <span className="truncate font-medium">{row.name}</span>
                 <span className="truncate font-mono text-xs text-muted-foreground">{row.id}</span>
-                <span className="ml-auto shrink-0 text-xs text-muted-foreground">{row.version.replace(/^>\s*/, '')}</span>
-              </CommandItem>
+              </ItemRow>
             ))}
           </CommandGroup>
         )}
 
         <CommandSeparator />
 
-        {/* 导航与快捷命令 */}
+        {/* 导航：三个视图，带一句话说明，避免只看到一个光秃秃的词 */}
         <CommandGroup heading="前往">
-          <CommandItem value="go-discover" onSelect={() => run(() => onNavigate('discover'))} className="gap-2.5">
-            <Compass className="size-4 shrink-0" />
-            发现
-          </CommandItem>
-          <CommandItem value="go-installed" onSelect={() => run(() => onNavigate('installed'))} className="gap-2.5">
-            <HardDriveDownload className="size-4 shrink-0" />
-            已安装
-          </CommandItem>
-          <CommandItem value="go-updates" onSelect={() => run(() => onNavigate('updates'))} className="gap-2.5">
-            <CircleArrowUp className="size-4 shrink-0" />
-            更新
-            {updatesCount > 0 && (
-              <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-gold px-1.5 text-[11px] font-semibold text-gold-foreground">
-                {updatesCount}
-              </span>
-            )}
-          </CommandItem>
+          {NAV_ITEMS.map(({ view, label, desc, Icon }) => (
+            <ItemRow
+              key={view}
+              value={`go-${view}`}
+              onSelect={() => run(() => onNavigate(view))}
+              icon={ico(Icon)}
+              tone="neutral"
+              hint={
+                view === 'updates' && updatesCount > 0 ? (
+                  <Badge variant="warning" className="ml-2">
+                    {updatesCount}
+                  </Badge>
+                ) : null
+              }
+            >
+              <span className="font-medium">{label}</span>
+              <span className="truncate text-xs text-muted-foreground">{desc}</span>
+            </ItemRow>
+          ))}
         </CommandGroup>
 
         <CommandGroup heading="操作">
           {updatesCount > 0 && (
-            <CommandItem
+            <ItemRow
               value="upgrade-all"
-              disabled={batchMode}
               onSelect={() => run(onUpgradeAll)}
-              className="gap-2.5"
+              disabled={batchMode}
+              title={batchMode ? '批量更新进行中，暂时无法再次触发' : undefined}
+              icon={batchMode ? ico(Loader2, 'animate-spin') : ico(Sparkles)}
+              tone="amber"
+              hint={
+                batchMode ? (
+                  <span className="shrink-0 text-xs text-muted-foreground">批量更新中</span>
+                ) : (
+                  <Badge variant="warning" className="ml-2">
+                    {updatesCount}
+                  </Badge>
+                )
+              }
             >
-              {batchMode ? <Loader2 className="size-4 shrink-0 animate-spin" /> : <Sparkles className="size-4 shrink-0 text-gold" />}
-              全部更新（{updatesCount} 个）
-            </CommandItem>
+              <span className="font-medium">全部更新</span>
+              <span className="truncate text-xs text-muted-foreground">
+                {batchMode ? '等待当前批量任务完成' : `${updatesCount} 个程序可升级`}
+              </span>
+            </ItemRow>
           )}
-          <CommandItem value="refresh" onSelect={() => run(onRefreshAll)} className="gap-2.5">
-            <RefreshCw className="size-4 shrink-0" />
-            刷新数据
-          </CommandItem>
-          <CommandItem value="toggle-theme" onSelect={() => run(onToggleTheme)} className="gap-2.5">
-            {dark ? <Sun className="size-4 shrink-0" /> : <Moon className="size-4 shrink-0" />}
-            切换到{dark ? '浅色' : '深色'}模式
-          </CommandItem>
+
+          <ItemRow
+            value="refresh"
+            onSelect={() => run(onRefreshAll)}
+            icon={ico(RefreshCw)}
+            tone="info"
+            hint={<Info className="size-3.5 shrink-0 text-muted-foreground" />}
+          >
+            <span className="font-medium">刷新数据</span>
+            <span className="truncate text-xs text-muted-foreground">重新拉取已安装与可更新列表</span>
+          </ItemRow>
+
+          <ItemRow
+            value="toggle-theme"
+            onSelect={() => run(onToggleTheme)}
+            icon={ico(dark ? Sun : Moon)}
+            tone="neutral"
+          >
+            <span>切换到{dark ? '浅色' : '深色'}模式</span>
+          </ItemRow>
         </CommandGroup>
       </CommandList>
 
-      {/* Dia 式内联键位提示 */}
-      <div className="flex items-center gap-4 border-t px-4 py-2 text-[11px] text-muted-foreground">
-        <span className="inline-flex items-center gap-1">
-          <kbd className="rounded border bg-muted px-1 font-mono">↑↓</kbd> 选择
-        </span>
-        <span className="inline-flex items-center gap-1">
-          <kbd className="rounded border bg-muted px-1 font-mono">↵</kbd> 执行
-        </span>
-        <span className="inline-flex items-center gap-1">
-          <kbd className="rounded border bg-muted px-1 font-mono">esc</kbd> 关闭
-        </span>
+      {/* 键位提示条：与任务中心同一套浮层语言 */}
+      <div className="flex items-center gap-3 border-t border-border/70 bg-surface-3/30 px-3 py-1.5 text-2xs text-muted-foreground">
+        <Kbd>↑↓</Kbd>
+        <span>选择</span>
+        <Kbd>↵</Kbd>
+        <span>执行</span>
+        <Kbd>esc</Kbd>
+        <span>关闭</span>
         {runningTasks > 0 && (
           <span className="ml-auto inline-flex items-center gap-1.5 text-primary">
             <Loader2 className="size-3 animate-spin" />
-            {runningTasks} 个任务进行中
+            <span className="tabular-nums">{runningTasks}</span> 个任务进行中
           </span>
         )}
       </div>
     </CommandDialog>
+  )
+}
+
+function Kbd({ children }: { children: ReactNode }) {
+  return (
+    <kbd className="rounded-xs border border-border bg-surface-1 px-1 font-mono text-2xs text-foreground-subtle shadow-s1">
+      {children}
+    </kbd>
   )
 }

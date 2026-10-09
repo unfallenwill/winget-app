@@ -147,10 +147,10 @@ if (process.env.SCREENSHOT) {
       try {
         if (mode === 'dark') {
           await wc.executeJavaScript("document.documentElement.classList.add('dark')")
-          mainWindow.setBackgroundColor('#21201c')
+          mainWindow.setBackgroundColor('#201e19')
         } else if (mode === 'light') {
           await wc.executeJavaScript("document.documentElement.classList.remove('dark')")
-          mainWindow.setBackgroundColor('#fbfaf6')
+          mainWindow.setBackgroundColor('#f7f3ec')
         } else if (mode === 'installed' || mode === 'updates') {
           const label = mode === 'installed' ? '已安装' : '更新'
           await wc.executeJavaScript(

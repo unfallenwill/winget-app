@@ -4,87 +4,193 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * 设计语言：Dia 浏览器风格（diabrowser.com 品牌令牌实测）
- * - 暖白背景 #FBFAF6 + 暖黑文字 #262625（拒绝冷灰蓝）
- * - 主色矢车菊蓝紫 #5863EA，金黄 #E1B746 仅作点缀
- * - 12px 柔和大圆角，胶囊按钮，无重阴影
+ * 设计语言 v2：Dia 暖纸 × Raycast 键盘优先
+ *
+ * 色彩  中性色统一向暖黄（hue≈45°）偏移，明暗两套都拒绝冷灰蓝。
+ *       表面四级：surface-0 页面底 → surface-1 卡片 → surface-2 浮层/输入槽 → surface-3 悬停/选中。
+ *       muted / secondary / accent 是三档可辨识的暖中性填充（由浅到深），不再塌成一色。
+ * 阴影  层级越高浮起越多越柔：s1 卡片 → s2 浮起 → s3 浮层/对话框；投影为暖棕而非中性黑。
+ *       `.shadow-dia` 保留为 s3 的旧名别名。
+ * 排版  --text-2xs…2xl 紧凑刻度 11/12/13/14/16/20/24px；对齐数字（版本号/计数）用 `tabular-nums`；
+ *       --font-mono 是 Windows + CJK 适配栈（Consolas/Cascadia 在前，雅黑/苹方兜底中日韩字形）。
+ * 圆角  5/7/9/13/16/20px 分别对应 标签 → 输入与菜单项 → 按钮与列表行 → 卡片 → 浮层 → 面板；
+ *       胶囊继续用 rounded-full。全部由 --radius 派生。
+ * 动效  时长 fast 120ms / base 180ms / slow 260ms，缓动统一 cubic-bezier(.2,0,0,1)（快出场）。
+ *       Tailwind 侧：duration-fast|base|slow、ease-diasnap|ease-settle、animate-shimmer|indeterminate。
+ * 焦点  `focus-ring` 为通用焦点环；输入类控件用 border-ring + ring-ring/35。
+ * 无障碍 prefers-reduced-motion 全局压缩 animation/transition；
+ *       进度类指示器需保留动画，否则用户无法感知"仍在运行" → 加 `motion-required`。
  */
 
 :root {
-  --radius: 0.75rem;
-  --background: #fbfaf6;
-  --foreground: #262625;
-  --card: #fffffd;
-  --card-foreground: #262625;
-  --popover: #fffffd;
-  --popover-foreground: #262625;
+  color-scheme: light;
+
+  /* ── 字体栈 ───────────────────────────────────────────── */
+  --font-ui:
+    "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system,
+    "Microsoft YaHei UI", "PingFang SC", "Noto Sans SC", sans-serif;
+  --font-code:
+    "Cascadia Code", "Cascadia Mono", "JetBrains Mono", Consolas, "SF Mono",
+    ui-monospace, "DejaVu Sans Mono", monospace, "Microsoft YaHei UI",
+    "PingFang SC";
+
+  /* ── 表面四级 ─────────────────────────────────────────── */
+  --surface-0: #f7f3ec; /* 页面底 */
+  --surface-1: #fdfbf6; /* 卡片 */
+  --surface-2: #fffefa; /* 浮层 / 输入槽 */
+  --surface-3: #e9e3d4; /* 悬停 / 选中 */
+
+  /* ── 语义令牌（必须保留全部旧名） ────────────────────── */
+  --radius: 0.5625rem;
+  --background: var(--surface-0);
+  --foreground: #26241e;
+  --foreground-subtle: #736c5c;
+  --card: var(--surface-1);
+  --card-foreground: #26241e;
+  --popover: var(--surface-2);
+  --popover-foreground: #26241e;
   --primary: #5863ea;
   --primary-foreground: #fdfcff;
-  --secondary: #efede5;
-  --secondary-foreground: #262625;
-  --muted: #f2f0e9;
-  --muted-foreground: #6f6c62;
-  --accent: #efede5;
-  --accent-foreground: #262625;
-  --destructive: #e5484d;
+  --secondary: #ebe5d6;
+  --secondary-foreground: #26241e;
+  --muted: #f2eee4;
+  --muted-foreground: #6b6557;
+  --accent: #e3dcc9;
+  --accent-foreground: #26241e;
+  --destructive: #d6453f;
   --destructive-foreground: #fdfcff;
-  --border: #e8e5da;
-  --input: #e8e5da;
+  --border: #e7e1d1;
+  --border-strong: #d8d0bb;
+  --input: #dcd5c2;
   --ring: #5863ea;
+
   --chart-1: #5863ea;
-  --chart-2: #e1b746;
-  --chart-3: #4caf7d;
-  --chart-4: #e07a5f;
-  --chart-5: #9b8afb;
-  --sidebar: #f5f3ea;
-  --sidebar-foreground: #262625;
+  --chart-2: #d9a92f;
+  --chart-3: #3f8f56;
+  --chart-4: #c9694a;
+  --chart-5: #8b7ae8;
+
+  --sidebar: #f2eee3;
+  --sidebar-foreground: #26241e;
   --sidebar-primary: #5863ea;
   --sidebar-primary-foreground: #fdfcff;
-  --sidebar-accent: #eceadf;
-  --sidebar-accent-foreground: #262625;
-  --sidebar-border: #e8e5da;
+  --sidebar-accent: #e6e0d0;
+  --sidebar-accent-foreground: #26241e;
+  --sidebar-border: #e2dcca;
   --sidebar-ring: #5863ea;
-  --success: #3d9a50;
+
+  --success: #3d8f4f;
+  --success-foreground: #f2faf3;
+  --warning: #a9701a;
+  --warning-foreground: #fdf7ec;
+  --info: #2a7f8f;
+  --info-foreground: #eff8f9;
   --gold: #e1b746;
-  --gold-foreground: #262625;
+  --gold-foreground: #2b2716;
+
+  --overlay: rgb(48 39 22 / 38%);
+
+  /* ── 分层阴影：暖棕投影，高层更浮更柔 ────────────────── */
+  --shadow-1:
+    0 1px 2px rgb(58 46 22 / 5%), 0 1px 1px rgb(58 46 22 / 3%);
+  --shadow-2:
+    0 2px 4px rgb(58 46 22 / 5%),
+    0 8px 20px -6px rgb(58 46 22 / 10%);
+  --shadow-3:
+    0 2px 6px rgb(48 38 18 / 6%),
+    0 14px 34px -8px rgb(48 38 18 / 14%),
+    0 36px 72px -24px rgb(48 38 18 / 16%);
+  --well-inset: inset 0 1px 2px rgb(58 46 22 / 7%);
+  --glow-primary: 0 0 0 3px color-mix(in oklab, var(--ring) 22%, transparent);
+  --glow-danger: 0 0 0 3px color-mix(in oklab, var(--destructive) 22%, transparent);
+
+  /* ── 动效刻度 ─────────────────────────────────────────── */
+  --motion-fast: 120ms;
+  --motion-base: 180ms;
+  --motion-slow: 260ms;
+  --motion-shimmer: 1600ms;
+  --motion-ease: cubic-bezier(0.2, 0, 0, 1);
+  --motion-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+
+  /* 让所有 tw-animate-css 的进出场默认走本项目缓动与时长 */
+  --tw-duration: var(--motion-base);
+  --tw-ease: var(--motion-ease);
+
+  --scrollbar-thumb: color-mix(in oklab, var(--foreground) 18%, transparent);
+  --scrollbar-thumb-hover: color-mix(
+    in oklab,
+    var(--foreground) 32%,
+    transparent
+  );
 }
 
 .dark {
-  --background: #21201c;
-  --foreground: #edeae1;
-  --card: #2a2924;
-  --card-foreground: #edeae1;
-  --popover: #2a2924;
-  --popover-foreground: #edeae1;
-  --primary: #7d86f2;
-  --primary-foreground: #191814;
-  --secondary: #35332b;
-  --secondary-foreground: #edeae1;
-  --muted: #35332b;
-  --muted-foreground: #a5a195;
-  --accent: #35332b;
-  --accent-foreground: #edeae1;
-  --destructive: #ff6369;
-  --destructive-foreground: #191814;
-  --border: rgb(255 255 255 / 9%);
-  --input: rgb(255 255 255 / 13%);
-  --ring: #7d86f2;
-  --chart-1: #7d86f2;
-  --chart-2: #e1b746;
-  --chart-3: #6bcb7b;
-  --chart-4: #f28870;
-  --chart-5: #b3a9ff;
-  --sidebar: #26251f;
-  --sidebar-foreground: #edeae1;
-  --sidebar-primary: #7d86f2;
-  --sidebar-primary-foreground: #191814;
-  --sidebar-accent: #32302a;
-  --sidebar-accent-foreground: #edeae1;
-  --sidebar-border: rgb(255 255 255 / 8%);
-  --sidebar-ring: #7d86f2;
-  --success: #6bcb7b;
-  --gold: #e1b746;
-  --gold-foreground: #191814;
+  color-scheme: dark;
+
+  --surface-0: #201e19;
+  --surface-1: #292720;
+  --surface-2: #322f28;
+  --surface-3: #3c3831;
+
+  --foreground: #efece1;
+  --foreground-subtle: #8a8474;
+  --card: var(--surface-1);
+  --card-foreground: #efece1;
+  --popover: var(--surface-2);
+  --popover-foreground: #efece1;
+  --primary: #8b93f7;
+  --primary-foreground: #17150f;
+  --secondary: #38352d;
+  --secondary-foreground: #efece1;
+  --muted: #2f2c25;
+  --muted-foreground: #a8a294;
+  --accent: #413d34;
+  --accent-foreground: #efece1;
+  --destructive: #ff7b73;
+  --destructive-foreground: #1b0f0e;
+  --border: rgb(250 243 228 / 11%);
+  --border-strong: rgb(250 243 228 / 19%);
+  --input: rgb(250 243 228 / 15%);
+  --ring: #8b93f7;
+
+  --chart-1: #8b93f7;
+  --chart-2: #e5bd57;
+  --chart-3: #6cc07c;
+  --chart-4: #f0886a;
+  --chart-5: #a89cff;
+
+  --sidebar: #26241e;
+  --sidebar-foreground: #efece1;
+  --sidebar-primary: #8b93f7;
+  --sidebar-primary-foreground: #17150f;
+  --sidebar-accent: #34312a;
+  --sidebar-accent-foreground: #efece1;
+  --sidebar-border: rgb(250 243 228 / 10%);
+  --sidebar-ring: #8b93f7;
+
+  --success: #6cc07c;
+  --success-foreground: #0e1a11;
+  --warning: #e6ac4f;
+  --warning-foreground: #211708;
+  --info: #64c1cf;
+  --info-foreground: #06181b;
+  --gold: #e5bd57;
+  --gold-foreground: #26210f;
+
+  --overlay: rgb(8 6 3 / 62%);
+
+  /* 暗色下投影靠不透明度而非模糊维持层次 */
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 40%);
+  --shadow-2:
+    0 2px 4px rgb(0 0 0 / 36%),
+    0 8px 20px -6px rgb(0 0 0 / 46%);
+  --shadow-3:
+    0 2px 6px rgb(0 0 0 / 40%),
+    0 14px 34px -8px rgb(0 0 0 / 52%),
+    0 36px 72px -24px rgb(0 0 0 / 58%);
+  --well-inset: inset 0 1px 2px rgb(0 0 0 / 35%);
+  --glow-primary: 0 0 0 3px color-mix(in oklab, var(--ring) 32%, transparent);
+  --glow-danger: 0 0 0 3px color-mix(in oklab, var(--destructive) 32%, transparent);
 }
 
 @theme inline {
@@ -105,6 +211,7 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-chart-1: var(--chart-1);
@@ -121,51 +228,188 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
   --color-gold: var(--gold);
   --color-gold-foreground: var(--gold-foreground);
-  --radius-sm: calc(var(--radius) - 6px);
-  --radius-md: calc(var(--radius) - 3px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 5px);
+  --color-overlay: var(--overlay);
+
+  /* 表面四级：bg-surface-0…3 */
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  /* 文字层级：text-foreground-subtle / text-foreground */
+  --color-foreground-subtle: var(--foreground-subtle);
+
+  /* 字体 */
+  --font-sans: var(--font-ui);
+  --font-mono: var(--font-code);
+
+  /* 紧凑字号刻度 */
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.125rem;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 0.875rem;
+  --text-base--line-height: 1.375rem;
+  --text-lg: 1rem;
+  --text-lg--line-height: 1.5rem;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 2rem;
+
+  /* 行高与字距 */
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+  --tracking-tight: -0.011em;
+  --tracking-tighter: -0.02em;
+  --tracking-wide: 0.03em;
+
+  /* 圆角刻度 */
+  --radius-xs: calc(var(--radius) - 4px);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 7px);
+  --radius-2xl: calc(var(--radius) + 11px);
+  --radius-pill: 999px;
+
+  /* 阴影刻度 */
+  --shadow-s1: var(--shadow-1);
+  --shadow-s2: var(--shadow-2);
+  --shadow-s3: var(--shadow-3);
+  --shadow-well: var(--well-inset);
+  --shadow-glow: var(--glow-primary);
+  --shadow-danger: var(--glow-danger);
+
+  /* 动效刻度 */
+  --transition-duration-fast: var(--motion-fast);
+  --transition-duration-base: var(--motion-base);
+  --transition-duration-slow: var(--motion-slow);
+  --ease-diasnap: var(--motion-ease);
+  --ease-settle: var(--motion-ease-exit);
+  --animate-shimmer: shimmer var(--motion-shimmer) linear infinite;
+  --animate-indeterminate: indeterminate 1400ms cubic-bezier(0.65, 0, 0.35, 1)
+    infinite;
+  --animate-fade-up: fade-up var(--motion-base) var(--motion-ease) both;
+}
+
+@keyframes shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes indeterminate {
+  0% {
+    transform: translateX(-100%) scaleX(0.3);
+  }
+  50% {
+    transform: translateX(10%) scaleX(0.55);
+  }
+  100% {
+    transform: translateX(100%) scaleX(0.3);
+  }
+}
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring/40;
   }
   body {
     @apply bg-background text-foreground;
-    font-family:
-      "Segoe UI Variable Text", "Segoe UI", "Microsoft YaHei UI",
-      "PingFang SC", system-ui, -apple-system, sans-serif;
+    font-family: var(--font-ui);
+    font-size: 0.875rem;
+    line-height: 1.375rem;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     overflow: hidden;
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--primary) 24%, transparent);
+  }
+  /* 键盘可达性是主路径：所有原生可聚焦元素兜底焦点环 */
+  :focus-visible {
+    outline-color: var(--ring);
   }
 }
 
-/* 柔和暖灰滚动条 */
+/* 通用焦点环：非输入类控件统一用它 */
+@utility focus-ring {
+  &:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+/* 输入类控件的焦点环：边框 + 外发光，替代逐处硬编码 */
+@utility focus-ring-soft {
+  &:focus-visible {
+    border-color: var(--ring);
+    box-shadow: var(--glow-primary);
+  }
+}
+
+/* ── 减弱动效：全局降级，仅进度指示器例外 ─────────────── */
+/* 排除而非事后恢复：动画常挂在伪元素上（Skeleton 的扫光是 ::before），
+   用 :not(.motion-required) 才能让例外覆盖到元素及其伪元素，且保留各自原本的时长。 */
+@media (prefers-reduced-motion: reduce) {
+  *:not(.motion-required),
+  *:not(.motion-required)::before,
+  *:not(.motion-required)::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* 暖灰细滚动条：常态低调，悬停加深 */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
 ::-webkit-scrollbar-thumb {
-  background: color-mix(in oklab, var(--muted-foreground) 26%, transparent);
+  background: var(--scrollbar-thumb);
+  border: 3px solid transparent;
+  background-clip: content-box;
   border-radius: 999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in oklab, var(--muted-foreground) 45%, transparent);
+  background: var(--scrollbar-thumb-hover);
+  background-clip: content-box;
 }
 
-/* Dia 式柔和投影：大模糊、低透明、暖色偏 */
+/* 旧名别名，等价于浮层层级阴影 */
 .shadow-dia {
-  box-shadow:
-    0 1px 2px rgb(38 38 37 / 4%),
-    0 8px 28px rgb(38 38 37 / 10%);
-}
-.dark .shadow-dia {
-  box-shadow:
-    0 1px 2px rgb(0 0 0 / 25%),
-    0 8px 28px rgb(0 0 0 / 40%);
+  box-shadow: var(--shadow-3);
 }
